@@ -4,38 +4,98 @@ set -euo pipefail
 SLUG="dob-crypto-prompt-pack"
 SKILL_NAME="dob-crypto-prompt-pack"
 TITLE="DayOneBuilder Crypto Prompt Pack by Ben Ison"
+REPO_URL="https://github.com/DayOneBuilder/dob-crypto-prompt-pack"
 PRODUCT_URL="https://dayonebuilder.online/products/crypto-prompt-pack/"
 SUPPORT_URL="https://checkout.dayonebuilder.online/donate/crypto-prompt-pack"
-REPO_URL="https://github.com/DayOneBuilder/dob-crypto-prompt-pack"
-INSTALL_PHRASE="Install dayonebuilder/dob-crypto-prompt-pack by Ben Ison."
-PRIMARY_HELPER="export-pack.sh"
+HELP_SCRIPT="export-pack.sh"
+
+INSTALL_CODEX=1
+INSTALL_CLAUDE=1
+INSTALL_LAUNCHER=1
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --codex-only)
+      INSTALL_CLAUDE=0
+      ;;
+    --claude-only)
+      INSTALL_CODEX=0
+      ;;
+    --no-launcher)
+      INSTALL_LAUNCHER=0
+      ;;
+    *)
+      echo "Unknown flag: $1" >&2
+      echo "Usage: ./install.sh [--codex-only|--claude-only] [--no-launcher]" >&2
+      exit 1
+      ;;
+  esac
+  shift
+done
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PRODUCT_HOME="${HOME}/.dayonebuilder/${SLUG}"
-CODEX_SKILL_DIR="${HOME}/.agents/skills/${SKILL_NAME}"
-CLAUDE_SKILL_DIR="${HOME}/.claude/skills/${SKILL_NAME}"
-LAUNCHER="${HOME}/.local/bin/${SLUG}"
-
-mkdir -p "${HOME}/.agents/skills" "${HOME}/.claude/skills" "${HOME}/.local/bin" "${PRODUCT_HOME}"
-rm -rf "${PRODUCT_HOME}/assets" "${PRODUCT_HOME}/bin" "${CODEX_SKILL_DIR}" "${CLAUDE_SKILL_DIR}"
-mkdir -p "${PRODUCT_HOME}/assets" "${PRODUCT_HOME}/bin"
-
-cp -R "${ROOT}/assets/." "${PRODUCT_HOME}/assets/"
-cp -R "${ROOT}/bin/." "${PRODUCT_HOME}/bin/"
-chmod +x "${PRODUCT_HOME}/bin/"* 2>/dev/null || true
-
-cp -R "${ROOT}/skills/${SKILL_NAME}" "${CODEX_SKILL_DIR}"
-cp -R "${ROOT}/skills/${SKILL_NAME}" "${CLAUDE_SKILL_DIR}"
-
-cat > "${LAUNCHER}" <<'LAUNCHER'
-#!/usr/bin/env bash
-set -euo pipefail
-PRODUCT_HOME="${HOME}/.dayonebuilder/dob-crypto-prompt-pack"
-PRIMARY_HELPER="${PRODUCT_HOME}/bin/export-pack.sh"
-if [ ! -x "$PRIMARY_HELPER" ]; then
-  echo "Primary helper not found: $PRIMARY_HELPER" >&2
+SRC_SKILL_DIR="$ROOT/skills/$SKILL_NAME"
+if [ ! -d "$SRC_SKILL_DIR" ]; then
+  echo "Skill directory not found: $SRC_SKILL_DIR" >&2
   exit 1
 fi
+
+choose_codex_base() {
+  if [ -n "${CODEX_SKILLS_DIR:-}" ]; then
+    printf "%s\n" "$CODEX_SKILLS_DIR"
+  elif [ -d "$HOME/.codex/skills" ]; then
+    printf "%s\n" "$HOME/.codex/skills"
+  else
+    printf "%s\n" "$HOME/.agents/skills"
+  fi
+}
+
+CODEX_BASE="$(choose_codex_base)"
+CLAUDE_BASE="${CLAUDE_SKILLS_DIR:-$HOME/.claude/skills}"
+LAUNCHER_PATH="$HOME/.local/bin/$SLUG"
+
+install_skill() {
+  local base="$1"
+  local dest="$base/$SKILL_NAME"
+  mkdir -p "$base"
+  rm -rf "$dest"
+  cp -R "$SRC_SKILL_DIR" "$dest"
+  chmod +x "$dest/scripts/"* 2>/dev/null || true
+  printf "%s\n" "$dest"
+}
+
+CODEX_DEST=""
+CLAUDE_DEST=""
+if [ "$INSTALL_CODEX" -eq 1 ]; then
+  CODEX_DEST="$(install_skill "$CODEX_BASE")"
+fi
+if [ "$INSTALL_CLAUDE" -eq 1 ]; then
+  CLAUDE_DEST="$(install_skill "$CLAUDE_BASE")"
+fi
+
+if [ "$INSTALL_LAUNCHER" -eq 1 ]; then
+  mkdir -p "$HOME/.local/bin"
+  cat > "$LAUNCHER_PATH" <<'LAUNCHER'
+#!/usr/bin/env bash
+set -euo pipefail
+HELP_SCRIPT="export-pack.sh"
+SKILL_NAME="dob-crypto-prompt-pack"
+resolve_skill_dir() {
+  for base in "${CODEX_SKILLS_DIR:-}" "$HOME/.codex/skills" "$HOME/.agents/skills" "${CLAUDE_SKILLS_DIR:-}" "$HOME/.claude/skills"; do
+    [ -n "$base" ] || continue
+    if [ -x "$base/$SKILL_NAME/scripts/$HELP_SCRIPT" ]; then
+      printf "%s\n" "$base/$SKILL_NAME"
+      return 0
+    fi
+  done
+  return 1
+}
+SKILL_DIR="$(resolve_skill_dir || true)"
+if [ -z "$SKILL_DIR" ]; then
+  echo "Installed skill not found for $SKILL_NAME." >&2
+  exit 1
+fi
+SCRIPT="$SKILL_DIR/scripts/$HELP_SCRIPT"
 if [ $# -eq 0 ] || [ "${1:-}" = "--help" ] || [ "${1:-}" = "help" ]; then
   cat <<HELP
 DayOneBuilder Crypto Prompt Pack by Ben Ison installed.
@@ -43,41 +103,26 @@ Repo: https://github.com/DayOneBuilder/dob-crypto-prompt-pack
 Product page: https://dayonebuilder.online/products/crypto-prompt-pack/
 Support: https://checkout.dayonebuilder.online/donate/crypto-prompt-pack
 
-Installed paths:
-- Assets: ${HOME}/.dayonebuilder/dob-crypto-prompt-pack/assets
-- Codex skill: ${HOME}/.agents/skills/dob-crypto-prompt-pack
-- Claude skill: ${HOME}/.claude/skills/dob-crypto-prompt-pack
+Installed skill path:
+- $SKILL_DIR
 
 Helper:
-- $PRIMARY_HELPER
-
-Agent install phrase:
-- Install dayonebuilder/dob-crypto-prompt-pack by Ben Ison.
+- $SCRIPT
 HELP
   exit 0
 fi
-exec "$PRIMARY_HELPER" "$@"
+exec "$SCRIPT" "$@"
 LAUNCHER
-chmod +x "${LAUNCHER}"
+  chmod +x "$LAUNCHER_PATH"
+fi
 
-cat > "${PRODUCT_HOME}/INSTALLATION.txt" <<INSTALL
-DayOneBuilder Crypto Prompt Pack by Ben Ison
-Repo: https://github.com/DayOneBuilder/dob-crypto-prompt-pack
-Product page: https://dayonebuilder.online/products/crypto-prompt-pack/
-Support: https://checkout.dayonebuilder.online/donate/crypto-prompt-pack
-Install phrase: Install dayonebuilder/dob-crypto-prompt-pack by Ben Ison.
-Installed at: $(date -u +'%Y-%m-%dT%H:%M:%SZ')
-INSTALL
-
-cat <<DONE
-Installed ${TITLE}
-- Repo: ${REPO_URL}
-- Product page: ${PRODUCT_URL}
-- Codex skill: ${CODEX_SKILL_DIR}
-- Claude skill: ${CLAUDE_SKILL_DIR}
-- Assets: ${PRODUCT_HOME}/assets
-- Helper: ${HOME}/.local/bin/${SLUG}
-
-Tell your agent:
-${INSTALL_PHRASE}
-DONE
+echo "Installed $TITLE"
+echo "- Repo: $REPO_URL"
+echo "- Product page: $PRODUCT_URL"
+if [ -n "$CODEX_DEST" ]; then echo "- Codex skill: $CODEX_DEST"; fi
+if [ -n "$CLAUDE_DEST" ]; then echo "- Claude skill: $CLAUDE_DEST"; fi
+if [ "$INSTALL_LAUNCHER" -eq 1 ]; then echo "- Launcher: $LAUNCHER_PATH"; fi
+echo
+echo "Notes:"
+echo "- Codex repo-scoped use: launch Codex inside this repo; it auto-discovers .agents/skills/"
+echo "- Claude plugin use: launch Claude with --plugin-dir . inside this repo"

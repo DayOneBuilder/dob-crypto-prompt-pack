@@ -1,0 +1,36 @@
+{
+  "name": "dob-crypto-prompt-pack",
+  "version": "1.1.0",
+  "description": "50 crypto research prompts for token diligence, whitepaper review, risk checks, and thesis work.",
+  "author": {
+    "name": "Ben Ison",
+    "email": "ben@dayonebuilder.online",
+    "url": "https://dayonebuilder.online"
+  },
+  "homepage": "https://dayonebuilder.online/products/crypto-prompt-pack/",
+  "repository": "https://github.com/DayOneBuilder/dob-crypto-prompt-pack",
+  "license": "MIT",
+  "keywords": [
+    "crypto",
+    "research",
+    "prompts",
+    "token-analysis"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "DOB Crypto Prompt Pack",
+    "shortDescription": "50 crypto research prompts for token diligence, whitepaper review, risk checks, and thesis work.",
+    "longDescription": "Reusable crypto research prompts for token due diligence, whitepaper review, red-flag checks, and cleaner project comparison.",
+    "developerName": "Ben Ison",
+    "category": "Productivity",
+    "capabilities": [
+      "Read"
+    ],
+    "websiteURL": "https://dayonebuilder.online/products/crypto-prompt-pack/",
+    "defaultPrompt": [
+      "Use DOB Crypto Prompt Pack for this task.",
+      "Install dayonebuilder/dob-crypto-prompt-pack by Ben Ison."
+    ],
+    "brandColor": "#9EF0C0"
+  }
+}

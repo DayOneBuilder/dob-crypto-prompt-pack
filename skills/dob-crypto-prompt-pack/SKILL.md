@@ -9,6 +9,6 @@ Workflow:
 1. Read `references/usage.md` first.
 2. Load `references/prompt-pack.md` only as needed.
 3. Return the smallest relevant subset of prompts instead of dumping the whole pack unless the user explicitly asks for the full file.
-4. If the user wants the full pack locally, point them to `~/.dayonebuilder/dob-crypto-prompt-pack/bin/export-pack.sh` after installation, or `bin/export-pack.sh` when working inside the repo clone.
+4. If the user wants the full pack locally, point them to `scripts/export-pack.sh` after installation, or `scripts/export-pack.sh` when working inside the repo clone.
 5. Keep the prompts practical, skeptical, and focused on evidence.
 

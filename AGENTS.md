@@ -1,14 +1,16 @@
 # AGENTS.md
 
-This repository is an installable DayOneBuilder product repo for `dob-crypto-prompt-pack`.
+This repository is a shared agent product repo for `dob-crypto-prompt-pack`.
 
-If the user asks to install or set up this repo:
-1. Run `./install.sh` from the repo root.
-2. Verify these paths exist afterward:
-   - `~/.agents/skills/dob-crypto-prompt-pack/SKILL.md`
-   - `~/.claude/skills/dob-crypto-prompt-pack/SKILL.md`
-   - `~/.local/bin/dob-crypto-prompt-pack`
-3. Mention the installed helper command: `~/.dayonebuilder/dob-crypto-prompt-pack/bin/export-pack.sh [target-file]`
+Packaging contract:
+- Codex repo-scoped path: `.agents/skills/dob-crypto-prompt-pack`
+- Codex plugin manifest: `.codex-plugin/plugin.json`
+- Codex local marketplace: `.agents/plugins/marketplace.json`
+- Claude plugin manifest: `.claude-plugin/plugin.json`
+- Self-contained skill logic lives under `skills/dob-crypto-prompt-pack/`
 
-If the user asks to create local files from this product, use the helper in `bin/export-pack.sh`.
-Keep the work productized. Do not invent hosted services or extra dependencies.
+When changing this repo:
+1. Keep the skill self-contained. If someone installs only the skill folder, it should still work.
+2. Do not hardcode a single Codex home path. Fallback installers must handle `~/.codex/skills` and `~/.agents/skills`.
+3. Keep repo-scoped use as the least noisy path: Codex in-repo, Claude with `--plugin-dir .`.
+4. Treat `install.sh` as optional convenience, not the only way the product works.
